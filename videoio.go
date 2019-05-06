@@ -161,6 +161,11 @@ type VideoCapture struct {
 	p C.VideoCapture
 }
 
+type VideoCaptureProperty struct {
+	Prop VideoCaptureProperties
+	Param float64
+}
+
 // VideoCaptureFile opens a VideoCapture from a file and prepares
 // to start capturing. It returns error if it fails to open the file stored in uri path.
 func VideoCaptureFile(uri string) (vc *VideoCapture, err error) {
@@ -168,6 +173,7 @@ func VideoCaptureFile(uri string) (vc *VideoCapture, err error) {
 
 	cURI := C.CString(uri)
 	defer C.free(unsafe.Pointer(cURI))
+
 
 	if !C.VideoCapture_Open(vc.p, cURI) {
 		err = fmt.Errorf("Error opening file: %s", uri)
@@ -178,8 +184,13 @@ func VideoCaptureFile(uri string) (vc *VideoCapture, err error) {
 
 // VideoCaptureDevice opens a VideoCapture from a device and prepares
 // to start capturing. It returns error if it fails to open the video device.
-func VideoCaptureDevice(device int) (vc *VideoCapture, err error) {
+func VideoCaptureDevice(device int, props ...VideoCaptureProperty) (vc *VideoCapture, err error) {
 	vc = &VideoCapture{p: C.VideoCapture_New()}
+
+	for _, p := range props {
+		vc.Set(p.Prop, p.Param)
+	}
+
 
 	if !C.VideoCapture_OpenDevice(vc.p, C.int(device)) {
 		err = fmt.Errorf("Error opening device: %d", device)
